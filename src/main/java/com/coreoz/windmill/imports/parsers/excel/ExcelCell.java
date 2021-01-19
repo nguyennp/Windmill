@@ -31,9 +31,18 @@ class ExcelCell implements Cell {
 			// POI sometimes returns null when a cell is empty...
 			return null;
 		}
-		if (excelCell.getCellTypeEnum() == CellType.NUMERIC
-			|| excelCell.getCellTypeEnum() == CellType.FORMULA) {
-			excelCell.setCellType(CellType.STRING);
+		if( excelCell.getCellType() == CellType.NUMERIC ){
+			return emptyToNullTrimmed(String.valueOf(excelCell.getNumericCellValue()), trimValue);
+		}
+		if( excelCell.getCellType() == CellType.FORMULA ){
+				switch (excelCell.getCachedFormulaResultType()) {
+					case BOOLEAN:
+						return emptyToNullTrimmed(Boolean.toString(excelCell.getBooleanCellValue()), trimValue);
+					case NUMERIC:
+						return emptyToNullTrimmed(String.valueOf(excelCell.getNumericCellValue()), trimValue);
+					case STRING:
+						return emptyToNullTrimmed(excelCell.getRichStringCellValue().getString(),trimValue);
+				}
 		}
 		return emptyToNullTrimmed(excelCell.getRichStringCellValue().getString(), trimValue);
 	}
@@ -71,10 +80,17 @@ class ExcelCell implements Cell {
 
 	private<T> T tryGetValue(Function<Double, T> cast) {
 		if (excelCell != null) {
-			if (excelCell.getCellTypeEnum() == CellType.FORMULA) {
-				excelCell.setCellType(CellType.NUMERIC);
+			if (excelCell.getCellType() == CellType.FORMULA) {
+				switch (excelCell.getCachedFormulaResultType()) {
+					case BOOLEAN:
+						return cast.apply(Double.valueOf((excelCell.getBooleanCellValue()==true?1D:0D)));
+					case NUMERIC:
+						return cast.apply(excelCell.getNumericCellValue());
+					case STRING:
+						return cast.apply(Double.valueOf(0D));
+				}
 			}
-			if(excelCell.getCellTypeEnum() == CellType.NUMERIC) {
+			if(excelCell.getCellType() == CellType.NUMERIC) {
 				return cast.apply(excelCell.getNumericCellValue());
 			}
 		}

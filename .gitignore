@@ -5,3 +5,5 @@
 /.apt_generated/
 /.factorypath
 /.README.md.html
+/.idea/*
+/windmill.iml
